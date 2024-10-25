@@ -17,17 +17,6 @@ export async function POST(req: Request) {
     }
 
     const storedOtp = await client.get(`otp:${email}`);
-    
-    // Add logging for debugging
-    console.log({
-      storedOtp,
-      providedOtp: otp,
-      match: storedOtp === otp,
-      types: {
-        storedOtp: typeof storedOtp,
-        providedOtp: typeof otp
-      }
-    });
 
     // Ensure both values are strings and trim any whitespace
     const normalizedStoredOtp = storedOtp?.trim();
