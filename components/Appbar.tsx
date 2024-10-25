@@ -13,15 +13,23 @@ function Appbar() {
     router.push('/'); // Redirect after logout
   };
 
- // if (status === "loading") return <div>Loading...</div>; // Display a loading message
-
   return (
     <div className="flex flex-row justify-between items-center bg-white shadow-lg rounded-full sticky top-16 z-20 mx-4 md:mx-16 p-4 transition-all duration-300 ease-in-out">
       {/* Brand Section */}
       <div className="flex items-center">
-        <Link href="/pages/console" className="flex items-center">
-          <div className="text-3xl font-extrabold text-black">LinkIT</div>
-        </Link>
+        {status === "authenticated" ? (
+          <Link href="/pages/console" className="flex items-center cursor-pointer">
+            <div className="text-3xl font-extrabold text-black hover:text-custom-yellow transition-colors duration-200">
+              LinkIT (Click me!)
+            </div>
+          </Link>
+        ) : (
+          <div className="flex items-center cursor-not-allowed text-gray-400">
+            <span className="text-3xl font-extrabold">
+              🔒 LinkIT
+            </span>
+          </div>
+        )}
       </div>
 
       {/* Welcome Message */}

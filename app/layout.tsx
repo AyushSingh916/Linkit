@@ -1,4 +1,3 @@
-
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { Providers } from "./providers";
@@ -31,10 +30,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} bg-black antialiased`}
       >
-        <Providers>
-        {children}
-    </Providers>
-        
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
