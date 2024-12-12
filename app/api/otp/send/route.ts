@@ -1,10 +1,6 @@
-// otp/send/route.ts
 import { NextResponse } from 'next/server';
 import nodemailer from 'nodemailer';
-import Redis from 'ioredis';
-
-// Initialize Redis client
-const client = new Redis(process.env.REDIS_URL);
+import { serialize } from 'cookie';
 
 export async function POST(req: Request) {
   const body = await req.json();
@@ -16,9 +12,6 @@ export async function POST(req: Request) {
 
   // Generate a 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-  // Store OTP in Redis with a TTL of 5 minutes
-  await client.set(`otp:${email}`, otp);
 
   // Set up Nodemailer transport using environment variables
   const transporter = nodemailer.createTransport({
@@ -38,7 +31,18 @@ export async function POST(req: Request) {
       text: `Your OTP code is ${otp}`,
     });
 
-    return NextResponse.json({ message: 'OTP sent' }, { status: 200 });
+    // Set OTP as a secure, HTTP-only cookie with a 5-minute expiration
+    const cookie = serialize('otp', otp, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 5 * 60, // 5 minutes
+      path: '/',
+    });
+
+    const response = NextResponse.json({ message: 'OTP sent' });
+    response.headers.set('Set-Cookie', cookie);
+
+    return response;
   } catch (error) {
     console.error('Error sending OTP:', error);
     return NextResponse.json({ message: 'Error sending OTP' }, { status: 500 });

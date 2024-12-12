@@ -1,26 +1,24 @@
-// Backend: app/api/otp/validate/route.ts
 import { NextResponse } from 'next/server';
-import Redis from 'ioredis';
-
-const client = new Redis(process.env.REDIS_URL);
+import { parse, serialize } from 'cookie';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { email, otp } = body;
+    const { otp: providedOtp } = body;
 
-    if (!email || !otp) {
+    if (!providedOtp) {
       return NextResponse.json(
-        { message: 'Email and OTP are required' }, 
+        { message: 'OTP is required' }, 
         { status: 400 }
       );
     }
 
-    const storedOtp = await client.get(`otp:${email}`);
+    // Extract cookies from the request
+    const cookies = req.headers.get('cookie') || '';
+    const parsedCookies = parse(cookies);
 
-    // Ensure both values are strings and trim any whitespace
-    const normalizedStoredOtp = storedOtp?.trim();
-    const normalizedProvidedOtp = otp.trim();
+    // Retrieve the stored OTP from the cookie
+    const storedOtp = parsedCookies.otp;
 
     if (!storedOtp) {
       return NextResponse.json(
@@ -29,12 +27,12 @@ export async function POST(req: Request) {
       );
     }
 
-    if (normalizedStoredOtp === normalizedProvidedOtp) {
-      await client.del(`otp:${email}`); // Remove OTP after successful validation
-      return NextResponse.json(
-        { message: 'OTP is valid' }, 
-        { status: 200 }
-      );
+    // Compare stored OTP with the provided OTP
+    if (storedOtp.trim() === providedOtp.trim()) {
+      // Clear the OTP cookie after successful validation
+      const response = NextResponse.json({ message: 'OTP is valid' }, { status: 200 });
+      response.headers.set('Set-Cookie', serialize('otp', '', { maxAge: -1, path: '/' }));
+      return response;
     }
 
     return NextResponse.json(
